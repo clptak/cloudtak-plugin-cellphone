@@ -1,91 +1,87 @@
-// Port of the node-red "Coordinates Parse" subflow.
+// Parse free-form coordinate strings into { lat, lon }.
 //
-// NOTE: the source regexes hard-code US-SW latitude bands (3X) and US-SW
-// longitude bands (11X). Behaviour is preserved here for parity.
+// Supports four formats:
+//   - Decimal Degree (DD):           "34.12345 -118.56789"
+//   - Decimal Minutes (DM):          "34 7.4070 -118 34.0734"
+//   - Degrees Minutes Seconds (DMS): "34 07 24.4 -118 34 04.4"
+//   - MPS / Hexagon Intergraph:      "(-118:34:04.4400,34:07:24.4200)"
+//
+// Rules:
+//   - The first numeric coordinate in the string is latitude; the second
+//     is longitude. Lat ranges -90..90, lon ranges -180..180.
+//   - Negative values use a leading hyphen. N/S/E/W suffixes are not
+//     supported.
+//   - In DM and DMS, only the *degree* component carries the sign. The
+//     minutes and seconds are always positive magnitudes.
+//   - MPS preserves the original SAROPS field order: longitude first,
+//     then latitude.
+//   - Output precision is 5 decimal places.
 
 export type LatLon = { lat: number; lon: number };
 
-const regexMPS = /\(-\d\d\d:\d\d:\d\d.\d\d\d\d,\d\d:\d\d:\d\d.\d\d\d\d\)/g;
-const regexDDdddd = /(\d+\.\d+)(\s|\S|\W+)(\d+\.\d+)/g;
-const regexDMmm = /(\d+)[\s|\W](\d+\.\d+)([\s|\W|\w]+)(\d+)[\s|\W](\d+\.\d+)/g;
-const regexDMSnoDec = /((\d+)(\s|\W)(\d+)([^.])(\d+))(.*)((\d+)(\s|\W)(\d+)([^.])(\d+))/g;
-
-const regexLatDD = /((3\d\.\d+))/g;
-const regexLonDD = /((11\d\.\d+))/g;
-const regexLatDMSnoDec = /(3\d)(\s|\W)(\d+)(\s|\W)(\d+)/g;
-const regexLonDMSnoDec = /(11\d)(\s|\W)(\d+)(\s|\W)(\d+)/g;
-const regexLatDM = /(3\d)[\W|\s](\d+\.\d+)/g;
-const regexLonDM = /(11\d)[\W|\s](\d+\.\d+)/g;
+// Format-detection regexes. Patterns are tried in order of specificity
+// (DMS → DM → DD) so a 6-number string isn't misread as 4 or 2 numbers.
+const regexMPS     = /\(-?\d+:\d+:\d+(?:\.\d+)?\s*,\s*-?\d+:\d+:\d+(?:\.\d+)?\)/;
+const regexDDPair  = /(-?\d+\.\d+)[^\d.-]+(-?\d+\.\d+)/;
+const regexDMPair  = /(-?\d+)[^\d.-]+(\d+\.\d+)[^\d.-]+(-?\d+)[^\d.-]+(\d+\.\d+)/;
+const regexDMSPair = /(-?\d+)[^\d.-]+(\d+)[^\d.-]+(\d+(?:\.\d+)?)[^\d.-]+(-?\d+)[^\d.-]+(\d+)[^\d.-]+(\d+(?:\.\d+)?)/;
 
 export type Topic = 'MPS' | 'decimalDegree' | 'decimalMinutes' | 'DegMinSec' | 'stop';
 
 export function detectTopic(coords: string): Topic {
-    if (coords.match(regexMPS) != null) return 'MPS';
-    if (coords.match(regexDDdddd) != null) return 'decimalDegree';
-    if (coords.match(regexDMmm) != null) return 'decimalMinutes';
-    if (coords.match(regexDMSnoDec) != null) return 'DegMinSec';
+    if (regexMPS.test(coords)) return 'MPS';
+    if (regexDMSPair.test(coords)) return 'DegMinSec';
+    if (regexDMPair.test(coords)) return 'decimalMinutes';
+    if (regexDDPair.test(coords)) return 'decimalDegree';
     return 'stop';
 }
 
-function dmsToDD(latDms: [number, number, number], lonDms: [number, number, number]): LatLon {
-    const latmin = latDms[1] + latDms[2] / 60;
-    const lonmin = lonDms[1] + lonDms[2] / 60;
-    const latdd = Number((latDms[0] + latmin / 60).toFixed(5));
-    const londd = Number((-1 * (Math.abs(lonDms[0]) + lonmin / 60)).toFixed(5));
-    return { lat: latdd, lon: londd };
+function round5(n: number): number {
+    return Number(n.toFixed(5));
+}
+
+function dmsToDecimal(deg: number, min: number, sec: number, sign: number): number {
+    return sign * (Math.abs(deg) + min / 60 + sec / 3600);
 }
 
 function parseDecimalDegree(coords: string): LatLon {
-    const latMatch = coords.match(regexLatDD);
-    const lonMatch = coords.match(regexLonDD);
-    if (!latMatch || !lonMatch) throw new Error('Could not parse decimal-degree coordinates');
-    const latdd = Number(latMatch[0]);
-    const londd = Number(lonMatch[0]);
-    const latMin = (latdd - Math.floor(latdd)) * 60;
-    const lonMin = (londd - Math.floor(londd)) * 60;
-    const latSec = (latMin - Math.floor(latMin)) * 60;
-    const lonSec = (lonMin - Math.floor(lonMin)) * 60;
-    const latDms: [number, number, number] = [Math.floor(latdd), Math.floor(latMin), Number(latSec.toFixed(4))];
-    const lonDms: [number, number, number] = [-1 * Math.floor(londd), Math.floor(lonMin), Number(lonSec.toFixed(4))];
-    return dmsToDD(latDms, lonDms);
+    const m = coords.match(regexDDPair);
+    if (!m) throw new Error('Could not parse decimal-degree coordinates');
+    return { lat: round5(Number(m[1])), lon: round5(Number(m[2])) };
+}
+
+function parseDecimalMinute(coords: string): LatLon {
+    const m = coords.match(regexDMPair);
+    if (!m) throw new Error('Could not parse decimal-minute coordinates');
+    const latSign = m[1].startsWith('-') ? -1 : 1;
+    const lonSign = m[3].startsWith('-') ? -1 : 1;
+    return {
+        lat: round5(latSign * (Math.abs(Number(m[1])) + Number(m[2]) / 60)),
+        lon: round5(lonSign * (Math.abs(Number(m[3])) + Number(m[4]) / 60))
+    };
 }
 
 function parseDegMinSec(coords: string): LatLon {
-    const latMatches = coords.match(regexLatDMSnoDec);
-    const lonMatches = coords.match(regexLonDMSnoDec);
-    if (!latMatches || !lonMatches) throw new Error('Could not parse DMS coordinates');
-    const latraw = latMatches[0].split(/\D/);
-    const lonraw = lonMatches[0].split(/\D/);
-    const latDms: [number, number, number] = [Number(latraw[0]), Number(latraw[1]), Number(latraw[2])];
-    const lonDms: [number, number, number] = [-1 * Number(lonraw[0]), Number(lonraw[1]), Number(lonraw[2])];
-    return dmsToDD(latDms, lonDms);
-}
-
-function parseDecimalMinute(input: string): LatLon {
-    const coords = input.replace('-', '');
-    const latraw = coords.match(regexLatDM);
-    const lonraw = coords.match(regexLonDM);
-    if (!latraw || !lonraw) throw new Error('Could not parse decimal-minute coordinates');
-    const latsplit = latraw[0].split(/\W|\s[^.]/);
-    const lonsplit = lonraw[0].split(/\W|\s[^.]/);
-    const latdd = Number(latsplit[0]);
-    const londd = Number(lonsplit[0]);
-    const latmm = Number(latsplit[1] + '.' + latsplit[2]);
-    const lonmm = Number(lonsplit[1] + '.' + lonsplit[2]);
-    const latSec = (latmm - Math.floor(latmm)) * 60;
-    const lonSec = (lonmm - Math.floor(lonmm)) * 60;
-    const latDms: [number, number, number] = [Math.floor(latdd), Math.floor(latmm), Number(latSec.toFixed(4))];
-    const lonDms: [number, number, number] = [-1 * Math.floor(londd), Math.floor(lonmm), Number(lonSec.toFixed(4))];
-    return dmsToDD(latDms, lonDms);
+    const m = coords.match(regexDMSPair);
+    if (!m) throw new Error('Could not parse DMS coordinates');
+    const latSign = m[1].startsWith('-') ? -1 : 1;
+    const lonSign = m[4].startsWith('-') ? -1 : 1;
+    return {
+        lat: round5(dmsToDecimal(Number(m[1]), Number(m[2]), Number(m[3]), latSign)),
+        lon: round5(dmsToDecimal(Number(m[4]), Number(m[5]), Number(m[6]), lonSign))
+    };
 }
 
 function parseMPS(coords: string): LatLon {
-    // "(-DDD:MM:SS.ssss,DD:MM:SS.ssss)" — Hexagon Intergraph format
-    const m = coords.match(/\(-(\d+):(\d+):(\d+\.\d+),(\d+):(\d+):(\d+\.\d+)\)/);
+    // Hexagon Intergraph: "(-DDD:MM:SS.ssss,DD:MM:SS.ssss)" — longitude first.
+    const m = coords.match(/\((-?\d+):(\d+):(\d+(?:\.\d+)?)\s*,\s*(-?\d+):(\d+):(\d+(?:\.\d+)?)\)/);
     if (!m) throw new Error('Could not parse MPS coordinates');
-    const lonDms: [number, number, number] = [-1 * Number(m[1]), Number(m[2]), Number(m[3])];
-    const latDms: [number, number, number] = [Number(m[4]), Number(m[5]), Number(m[6])];
-    return dmsToDD(latDms, lonDms);
+    const lonSign = m[1].startsWith('-') ? -1 : 1;
+    const latSign = m[4].startsWith('-') ? -1 : 1;
+    return {
+        lat: round5(dmsToDecimal(Number(m[4]), Number(m[5]), Number(m[6]), latSign)),
+        lon: round5(dmsToDecimal(Number(m[1]), Number(m[2]), Number(m[3]), lonSign))
+    };
 }
 
 export function parseCoordinates(input: { coordinates?: string; lat?: number | string; lon?: number | string }): LatLon {

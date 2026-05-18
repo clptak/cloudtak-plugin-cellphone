@@ -15,7 +15,7 @@ SAROPS deployment into a fully client-side CloudTAK plugin.
 - **RTT (Round Trip Time)** — given a tower location, azimuth and
   distance, produces a `u-rb-a` arc (±70° wedge) plus an `a-f-G` point
   for the tower.
-- Coordinate parsing for **DD / DMS / DM / MPS** formats (US-SW band).
+- Coordinate parsing for **DD / DMS / DM / MPS** formats (global lat/lon).
 - Optional **DataSync mission log entry** linked to the posted CoT via
   `entryUid`.
 - Automatic map refresh after a successful mission post.
@@ -97,10 +97,10 @@ session only.
 
 ## Known limitations
 
-- The coordinate parser regexes are hard-coded to US-SW latitude (`3X`)
-  and longitude (`11X`) bands — preserved from the source node-red
-  flows. Adjust the regex character classes in
-  [lib/coordinates.ts](lib/coordinates.ts) for other regions.
+- Compass-direction suffixes (e.g., `34.12345N 118.56789W`) are not
+  parsed. Use a leading hyphen for negative values.
+- The first number in the input is treated as latitude, the second as
+  longitude — there is no auto-detection by magnitude.
 - The Cell Ping `shape.ellipse` uses `major = minor = range` and
   `angle = 0`, producing a circle. The TAK type `u-d-c-c` rendering
   varies between TAK clients.
