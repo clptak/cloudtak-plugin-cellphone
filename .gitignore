@@ -1,0 +1,11 @@
+# OS / editor
+.DS_Store
+*.swp
+*~
+
+# Node (in case anyone adds a package.json for tooling)
+node_modules/
+
+# Build artifacts
+dist/
+*.log
