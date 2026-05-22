@@ -79,8 +79,8 @@
 <script setup lang='ts'>
 import { ref, reactive, computed } from 'vue';
 import { useMapStore } from '../../../src/stores/map.ts';
-import { db } from '../../../src/database.ts';
 import { std } from '../../../src/std.ts';
+import { normalize_geojson } from '@tak-ps/node-cot/normalize_geojson';
 import { parseCoordinates } from '../lib/coordinates.ts';
 import { prepareCellPing, cellPingFeatures } from '../lib/cell-ping.ts';
 import { prepareRtt, rttFeatures } from '../lib/rtt.ts';
@@ -123,7 +123,6 @@ const form = reactive<{
 });
 
 const missionGuid = computed<string | undefined>(() => mapStore.mission?.meta.guid);
-const missionName = computed<string | undefined>(() => mapStore.mission?.meta.name);
 
 async function submit() {
     error.value = '';
@@ -166,38 +165,19 @@ async function submit() {
             fc = rttFeatures(prepared);
         }
 
-        const guid = missionGuid.value;
-        const name = missionName.value;
-
-        if (!guid || !name) {
-            for (const feat of fc.features) {
-                await db.feature.put({
-                    id: String(feat.id),
-                    path: '/',
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    properties: feat.properties as any,
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    geometry: feat.geometry as any,
-                });
-            }
-            success.value = `Wrote ${fc.features.length} feature(s) to local map.`;
-            return;
-        }
-
-        // Tag every feature with the mission destination so TAK Server
-        // automatically links the CoT to the mission when it receives it.
+        // Add each feature via the map worker — authored:true puts it on the
+        // live map and, if a mission is active, links it to that mission and
+        // broadcasts it to TAK Server. No custom server routes needed.
         for (const feat of fc.features) {
-            if (feat.properties) feat.properties.dest = [{ mission: name }];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const norm = await normalize_geojson(feat as any);
+            await mapStore.worker.db.add(norm, { authored: true });
         }
 
-        // Send CoTs — TAK Server links them to the mission via <dest> automatically.
-        const cotResp = await std('/api/marti/cot', {
-            method: 'POST',
-            body: { features: fc.features }
-        }) as { uids: string[] };
+        const guid = missionGuid.value;
 
-        // Optional mission log entry referencing the primary feature's UID.
-        if (form.addDataSyncLog) {
+        // Optional mission log entry — only when a mission is active.
+        if (guid && form.addDataSyncLog) {
             const label = mode.value === 'rtt' ? 'RTT/TA' : 'Ping';
             const keyword = mode.value === 'rtt' ? 'rtt-ta' : 'ping';
             const callsign = String(fc.features[0].properties?.callsign ?? form.name);
@@ -207,14 +187,15 @@ async function submit() {
                     content: `${label} ${callsign}`,
                     dtg: localDateTimeToUtcISO(form.dateTime),
                     keywords: ['investigation', 'cellphone', keyword],
-                    entryUid: cotResp.uids[0]
+                    entryUid: String(fc.features[0].id)
                 }
             });
         }
 
-        const logSuffix = form.addDataSyncLog ? ' (with DataSync log entry)' : '';
-        success.value = `Posted ${fc.features.length} feature(s) to mission ${name}${logSuffix}.`;
-        await mapStore.loadMission(guid, { reload: true });
+        const suffix = guid
+            ? (form.addDataSyncLog ? ' to mission (with log entry)' : ' to mission')
+            : ' to local map';
+        success.value = `Posted ${fc.features.length} feature(s)${suffix}.`;
     } catch (err) {
         error.value = err instanceof Error ? err.message : String(err);
     } finally {
