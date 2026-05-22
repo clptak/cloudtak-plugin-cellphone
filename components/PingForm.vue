@@ -65,14 +65,26 @@
             No active mission — features will be written to the local map.
         </div>
 
-        <div v-if='error' class='alert alert-danger'>{{ error }}</div>
-        <div v-if='success' class='alert alert-success'>{{ success }}</div>
+        <div
+            v-if='error'
+            class='alert alert-danger'
+        >
+            {{ error }}
+        </div>
+        <div
+            v-if='success'
+            class='alert alert-success'
+        >
+            {{ success }}
+        </div>
 
         <button
             class='btn btn-primary w-100'
             :disabled='submitting'
             @click='submit'
-        >{{ submitting ? 'Submitting…' : 'Submit' }}</button>
+        >
+            {{ submitting ? 'Submitting…' : 'Submit' }}
+        </button>
     </div>
 </template>
 
@@ -171,7 +183,8 @@ async function submit() {
         for (const feat of fc.features) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const norm = await normalize_geojson(feat as any);
-            await mapStore.worker.db.add(norm, { authored: true });
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await mapStore.worker.db.add(norm as any, { authored: true });
         }
 
         const guid = missionGuid.value;
