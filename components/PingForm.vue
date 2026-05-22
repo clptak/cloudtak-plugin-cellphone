@@ -117,7 +117,7 @@ const form = reactive<{
     coordinates: '',
     distance: null,
     azimuth: null,
-    meters: true,
+    meters: false,
     dateTime: nowDateTimeLocal(),
     addDataSyncLog: false,
 });
