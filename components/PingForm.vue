@@ -123,6 +123,7 @@ const form = reactive<{
 });
 
 const missionGuid = computed<string | undefined>(() => mapStore.mission?.meta.guid);
+const missionName = computed<string | undefined>(() => mapStore.mission?.meta.name);
 
 async function submit() {
     error.value = '';
@@ -166,8 +167,9 @@ async function submit() {
         }
 
         const guid = missionGuid.value;
+        const name = missionName.value;
 
-        if (!guid) {
+        if (!guid || !name) {
             for (const feat of fc.features) {
                 await db.feature.put({
                     id: String(feat.id),
@@ -182,22 +184,19 @@ async function submit() {
             return;
         }
 
-        // Step 1: send CoTs to TAK Server via the user's connection
+        // Tag every feature with the mission destination so TAK Server
+        // automatically links the CoT to the mission when it receives it.
+        for (const feat of fc.features) {
+            if (feat.properties) feat.properties.dest = [{ mission: name }];
+        }
+
+        // Send CoTs — TAK Server links them to the mission via <dest> automatically.
         const cotResp = await std('/api/marti/cot', {
             method: 'POST',
             body: { features: fc.features }
         }) as { uids: string[] };
 
-        // Step 2: attach the CoT UIDs to the mission's contents.
-        // For RTT, the arc (features[0]) is the primary feature to associate;
-        // attaching all UIDs surfaces both arc and point in the mission view.
-        await std(`/api/marti/missions/${encodeURIComponent(guid)}/contents`, {
-            method: 'PUT',
-            body: { uids: cotResp.uids }
-        });
-
-        // Step 3: optional mission log entry, referencing the first feature
-        // (the arc for RTT, the circle for Cell Ping).
+        // Optional mission log entry referencing the primary feature's UID.
         if (form.addDataSyncLog) {
             const label = mode.value === 'rtt' ? 'RTT/TA' : 'Ping';
             const keyword = mode.value === 'rtt' ? 'rtt-ta' : 'ping';
@@ -214,7 +213,7 @@ async function submit() {
         }
 
         const logSuffix = form.addDataSyncLog ? ' (with DataSync log entry)' : '';
-        success.value = `Posted ${fc.features.length} feature(s) to mission ${guid}${logSuffix}.`;
+        success.value = `Posted ${fc.features.length} feature(s) to mission ${name}${logSuffix}.`;
         await mapStore.loadMission(guid, { reload: true });
     } catch (err) {
         error.value = err instanceof Error ? err.message : String(err);
