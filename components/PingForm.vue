@@ -182,11 +182,22 @@ async function submit() {
             return;
         }
 
-        await std(`/api/marti/missions/${encodeURIComponent(guid)}/cot`, {
+        // Step 1: send CoTs to TAK Server via the user's connection
+        const cotResp = await std('/api/marti/cot', {
             method: 'POST',
             body: { features: fc.features }
+        }) as { uids: string[] };
+
+        // Step 2: attach the CoT UIDs to the mission's contents.
+        // For RTT, the arc (features[0]) is the primary feature to associate;
+        // attaching all UIDs surfaces both arc and point in the mission view.
+        await std(`/api/marti/missions/${encodeURIComponent(guid)}/contents`, {
+            method: 'PUT',
+            body: { uids: cotResp.uids }
         });
 
+        // Step 3: optional mission log entry, referencing the first feature
+        // (the arc for RTT, the circle for Cell Ping).
         if (form.addDataSyncLog) {
             const label = mode.value === 'rtt' ? 'RTT/TA' : 'Ping';
             const keyword = mode.value === 'rtt' ? 'rtt-ta' : 'ping';
@@ -197,7 +208,7 @@ async function submit() {
                     content: `${label} ${callsign}`,
                     dtg: localDateTimeToUtcISO(form.dateTime),
                     keywords: ['investigation', 'cellphone', keyword],
-                    entryUid: String(fc.features[0].id)
+                    entryUid: cotResp.uids[0]
                 }
             });
         }

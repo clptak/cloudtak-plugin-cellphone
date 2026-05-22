@@ -25,29 +25,36 @@ SAROPS deployment into a fully client-side CloudTAK plugin.
 The form parses the coordinate string and builds GeoJSON features
 entirely in the browser, then:
 
-- **With an active DataSync mission** — posts features via CloudTAK's
-  `POST /api/marti/missions/:guid/cot` endpoint, which broadcasts them
-  as CoT through the user's TAK connection with a
-  `<marti><dest mission="...">` tag so they appear as map-visible
-  features in the mission. Optionally posts a mission log entry via
-  `POST /api/marti/missions/:guid/log`.
+- **With an active DataSync mission** — three-step flow that mirrors
+  TAK Server's own REST API:
+  1. `POST /api/marti/cot` — broadcasts the CoT features to TAK Server
+     via the user's TAK connection. Returns the assigned CoT UIDs.
+  2. `PUT /api/marti/missions/:guid/contents` — attaches those UIDs to
+     the mission so the features show up in the mission's feature list
+     and on the mission map.
+  3. (Optional) `POST /api/marti/missions/:guid/log` — adds a DataSync
+     log entry referencing the primary feature's UID (`entryUid`).
 - **Without an active mission** — writes the features into the local
   feature DB (`db.feature.put`) so they render on the map for the local
   session only.
 
 ## Requirements
 
-CloudTAK with the following endpoints, which are part of
-[dfpc-coe/CloudTAK PR #XXXX](https://github.com/dfpc-coe/CloudTAK/pulls):
+CloudTAK with:
 
-- `POST /api/marti/missions/:guid/cot` — broadcasts user-authored
-  features as CoT into a mission feature stream.
-- `entryUid` (and `contentHashes`) accepted on
-  `POST /api/marti/missions/:name/log` so the log entry links to the
-  CoT.
+- `POST /api/marti/cot` — submits CoT features through the user's TAK
+  connection. (Pending upstream — currently a custom route.)
+- `PUT /api/marti/missions/:name/contents` — attaches CoT UIDs (or
+  file hashes) to a mission. (Pending upstream — currently a custom
+  route.)
+- `POST /api/marti/missions/:name/log` accepts `entryUid` and
+  `contentHashes` — landed upstream in CloudTAK 13.2
+  ([PR #1454](https://github.com/dfpc-coe/CloudTAK/pull/1454)).
 
-Until that PR merges, the plugin requires CloudTAK built from a branch
-with those two additions.
+The two pending routes are thin wrappers around capabilities already
+in `@tak-ps/node-tak` (`api.Mission.attachContents`) and CloudTAK's
+existing `client.tak.write`. Until they land upstream, the plugin
+requires CloudTAK built from a fork that includes them.
 
 ## Installation
 
