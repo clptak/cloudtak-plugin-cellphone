@@ -23,55 +23,45 @@ SAROPS deployment into a fully client-side CloudTAK plugin.
 ## How it works
 
 The form parses the coordinate string and builds GeoJSON features
-entirely in the browser, then:
+entirely in the browser, then passes them to CloudTAK's map worker via
+`mapStore.worker.db.add(feature, { authored: true })` — the same
+mechanism used by CloudTAK's built-in drawing tools.
 
-- **With an active DataSync mission** — three-step flow that mirrors
-  TAK Server's own REST API:
-  1. `POST /api/marti/cot` — broadcasts the CoT features to TAK Server
-     via the user's TAK connection. Returns the assigned CoT UIDs.
-  2. `PUT /api/marti/missions/:guid/contents` — attaches those UIDs to
-     the mission so the features show up in the mission's feature list
-     and on the mission map.
-  3. (Optional) `POST /api/marti/missions/:guid/log` — adds a DataSync
-     log entry referencing the primary feature's UID (`entryUid`).
-- **Without an active mission** — writes the features into the local
-  feature DB (`db.feature.put`) so they render on the map for the local
-  session only.
+- **With an active DataSync mission** — the worker automatically links
+  each feature to the mission and broadcasts it to TAK Server over the
+  user's existing connection. Optionally posts a DataSync log entry via
+  `POST /api/marti/missions/:guid/log`.
+- **Without an active mission** — features appear on the local map for
+  the current session only.
+
+No custom server routes are required. The plugin works with an
+unmodified upstream CloudTAK installation.
 
 ## Requirements
 
-CloudTAK with:
-
-- `POST /api/marti/cot` — submits CoT features through the user's TAK
-  connection. (Pending upstream — currently a custom route.)
-- `PUT /api/marti/missions/:name/contents` — attaches CoT UIDs (or
-  file hashes) to a mission. (Pending upstream — currently a custom
-  route.)
-- `POST /api/marti/missions/:name/log` accepts `entryUid` and
-  `contentHashes` — landed upstream in CloudTAK 13.2
+- **CloudTAK** — upstream `main` branch from
+  [dfpc-coe/CloudTAK](https://github.com/dfpc-coe/CloudTAK). No fork
+  or custom routes needed.
+- `POST /api/marti/missions/:name/log` — available in CloudTAK 13.2+
   ([PR #1454](https://github.com/dfpc-coe/CloudTAK/pull/1454)).
-
-The two pending routes are thin wrappers around capabilities already
-in `@tak-ps/node-tak` (`api.Mission.attachContents`) and CloudTAK's
-existing `client.tak.write`. Until they land upstream, the plugin
-requires CloudTAK built from a fork that includes them.
+  Required only if you use the **Add DataSync Log** option.
 
 ## Installation
 
-Drop this repo's files into your CloudTAK build at
-`api/web/plugins/ping/`:
+**1. Clone the plugin into your CloudTAK tree**
 
 ```bash
 # from your CloudTAK checkout root
-mkdir -p api/web/plugins/ping
-cp -r /path/to/cloudtak-plugin-cellphone/* api/web/plugins/ping/
+git clone https://github.com/clptak/cloudtak-plugin-cellphone.git api/web/plugins/ping
 ```
 
-Plugin files mirror the directory layout expected by CloudTAK's plugin
-loader, so no rewiring is needed. The loader auto-discovers the plugin
-via the `import.meta.glob` in CloudTAK's `api/web/src/main.ts`.
+The plugin directory is listed in CloudTAK's `.gitignore` so git will
+not track or overwrite it. The loader auto-discovers it via
+`import.meta.glob` in `api/web/src/main.ts` — no wiring needed.
 
-Rebuild CloudTAK's web tier — for a Dockerized stack:
+**2. Rebuild and restart**
+
+For a Dockerized stack:
 
 ```bash
 docker compose build --no-cache cloudtak-api
@@ -80,6 +70,16 @@ docker compose up -d --force-recreate cloudtak-api
 
 Then reload the CloudTAK UI. A **Cell Ping / RTT** entry appears in the
 main menu.
+
+**Updating the plugin**
+
+```bash
+cd api/web/plugins/ping
+git pull
+cd ../../../..
+docker compose build --no-cache cloudtak-api
+docker compose up -d --force-recreate cloudtak-api
+```
 
 ## Usage
 
