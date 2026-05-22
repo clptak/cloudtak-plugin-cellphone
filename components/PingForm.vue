@@ -5,16 +5,16 @@
                 class='btn btn-sm'
                 :class='{ "btn-primary": mode === "ping", "btn-outline-secondary": mode !== "ping" }'
                 @click='mode = "ping"'
-            >Cell Ping</button>
+            >Cellphone Ping</button>
             <button
                 class='btn btn-sm ms-2'
                 :class='{ "btn-primary": mode === "rtt", "btn-outline-secondary": mode !== "rtt" }'
                 @click='mode = "rtt"'
-            >RTT</button>
+            >RTT Timing Advance</button>
         </div>
 
         <div class='mb-2'>
-            <label class='form-label'>Name / Callsign</label>
+            <label class='form-label'>CARRIER</label>
             <input v-model='form.name' class='form-control'>
         </div>
 
@@ -79,7 +79,7 @@
 <script setup lang='ts'>
 import { ref, reactive, computed } from 'vue';
 import { useMapStore } from '../../../src/stores/map.ts';
-import { db } from '../../../src/base/database.ts';
+import { db } from '../../../src/database.ts';
 import { std } from '../../../src/std.ts';
 import { parseCoordinates } from '../lib/coordinates.ts';
 import { prepareCellPing, cellPingFeatures } from '../lib/cell-ping.ts';
