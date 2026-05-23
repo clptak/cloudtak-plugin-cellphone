@@ -7,6 +7,8 @@ mission as CoT features.
 Ports the `ping2tak` and `rtt2tak` HTTP endpoints from the node-red
 SAROPS deployment into a fully client-side CloudTAK plugin.
 
+![Cell Ping / RTT form with an active DataSync mission](CloudTAK_Cellphone_Ping.png)
+
 ## Features
 
 - **Cell Ping** — given a tower location, range, and azimuth, produces a
