@@ -2,7 +2,7 @@
 .DS_Store
 *.swp
 *~
-.cursor/
+.cursor/*
 !.cursor/skills/
 !.cursor/skills/github-release-manager/
 !.cursor/skills/github-release-manager/SKILL.md
