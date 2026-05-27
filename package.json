@@ -1,0 +1,25 @@
+{
+  "name": "cloudtak-plugin-cellphone",
+  "private": true,
+  "description": "Cell Ping / RTT plugin for CloudTAK",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "peerDependencies": {
+    "@tak-ps/cloudtak": "*",
+    "@tak-ps/node-cot": "*",
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.14.0",
+    "@tak-ps/cloudtak": "*",
+    "eslint": "^9.14.0",
+    "eslint-plugin-vue": "^9.30.0",
+    "globals": "^15.12.0",
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^8.13.0",
+    "vue": "^3.5.0"
+  }
+}

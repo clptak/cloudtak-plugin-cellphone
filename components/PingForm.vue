@@ -5,43 +5,75 @@
                 class='btn btn-sm'
                 :class='{ "btn-primary": mode === "ping", "btn-outline-secondary": mode !== "ping" }'
                 @click='mode = "ping"'
-            >Cellphone Ping</button>
+            >
+                Cellphone Ping
+            </button>
             <button
                 class='btn btn-sm ms-2'
                 :class='{ "btn-primary": mode === "rtt", "btn-outline-secondary": mode !== "rtt" }'
                 @click='mode = "rtt"'
-            >RTT Timing Advance</button>
+            >
+                RTT Timing Advance
+            </button>
         </div>
 
         <div class='mb-2'>
             <label class='form-label'>CARRIER</label>
-            <input v-model='form.name' class='form-control'>
+            <input
+                v-model='form.name'
+                class='form-control'
+            >
         </div>
 
         <div class='mb-2'>
             <label class='form-label'>Coordinates (DD / DMS / DM / MPS)</label>
-            <input v-model='form.coordinates' class='form-control' placeholder='34.12345 -118.56789'>
+            <input
+                v-model='form.coordinates'
+                class='form-control'
+                placeholder='34.12345 -118.56789'
+            >
         </div>
 
         <div class='mb-2 row'>
             <div class='col'>
                 <label class='form-label'>{{ mode === 'rtt' ? 'Distance' : 'Range' }}</label>
-                <input v-model.number='form.distance' type='number' step='any' class='form-control'>
+                <input
+                    v-model.number='form.distance'
+                    type='number'
+                    step='any'
+                    class='form-control'
+                >
             </div>
-            <div v-if='mode === "rtt"' class='col'>
+            <div
+                v-if='mode === "rtt"'
+                class='col'
+            >
                 <label class='form-label'>Azimuth (deg)</label>
-                <input v-model.number='form.azimuth' type='number' step='any' class='form-control'>
+                <input
+                    v-model.number='form.azimuth'
+                    type='number'
+                    step='any'
+                    class='form-control'
+                >
             </div>
         </div>
 
         <div class='mb-2 form-check'>
-            <input v-model='form.meters' type='checkbox' class='form-check-input'>
+            <input
+                v-model='form.meters'
+                type='checkbox'
+                class='form-check-input'
+            >
             <label class='form-check-label'>Distance is in meters (else miles)</label>
         </div>
 
         <div class='mb-2'>
             <label class='form-label'>Date / Time (local)</label>
-            <input v-model='form.dateTime' type='datetime-local' class='form-control'>
+            <input
+                v-model='form.dateTime'
+                type='datetime-local'
+                class='form-control'
+            >
         </div>
 
         <div class='mb-2 form-check form-switch'>
@@ -54,14 +86,23 @@
             >
             <label class='form-check-label'>
                 Add DataSync Log
-                <span v-if='!missionGuid' class='text-muted'>(needs an active mission)</span>
+                <span
+                    v-if='!missionGuid'
+                    class='text-muted'
+                >(needs an active mission)</span>
             </label>
         </div>
 
-        <div v-if='missionGuid' class='mb-2 small text-muted'>
+        <div
+            v-if='missionGuid'
+            class='mb-2 small text-muted'
+        >
             Will post to active mission: <code>{{ missionGuid }}</code>
         </div>
-        <div v-else class='mb-2 small text-muted'>
+        <div
+            v-else
+            class='mb-2 small text-muted'
+        >
             No active mission — features will be written to the local map.
         </div>
 
