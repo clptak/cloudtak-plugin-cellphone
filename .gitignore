@@ -2,6 +2,7 @@
 .DS_Store
 *.swp
 *~
+.cursor/
 
 # Node (in case anyone adds a package.json for tooling)
 node_modules/
