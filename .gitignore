@@ -3,6 +3,9 @@
 *.swp
 *~
 .cursor/
+!.cursor/skills/
+!.cursor/skills/github-release-manager/
+!.cursor/skills/github-release-manager/SKILL.md
 
 # Node (in case anyone adds a package.json for tooling)
 node_modules/
