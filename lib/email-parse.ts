@@ -33,10 +33,11 @@ export const US_TIMEZONES: { id: string; label: string }[] = [
     { id: 'America/New_York', label: 'Eastern' },
     { id: 'America/Chicago', label: 'Central' },
     { id: 'America/Denver', label: 'Mountain' },
-    { id: 'America/Phoenix', label: 'Mountain — Arizona (no DST)' },
+    { id: 'America/Phoenix', label: 'Arizona' },
     { id: 'America/Los_Angeles', label: 'Pacific' },
     { id: 'America/Anchorage', label: 'Alaska' },
     { id: 'Pacific/Honolulu', label: 'Hawaii' },
+    { id: 'UTC', label: 'UTC/GMT' },
 ];
 
 function carrierPrefix(carrier: Carrier): string {

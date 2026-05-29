@@ -1,6 +1,6 @@
 import { defineAsyncComponent, markRaw } from 'vue';
 import type { App } from 'vue';
-import { IconRadar2 } from '@tabler/icons-vue';
+import { IconDeviceMobilePin } from '@tabler/icons-vue';
 import type { PluginAPI, PluginInstance } from '../../plugin.ts';
 
 const PingForm = defineAsyncComponent(() => import('./components/PingForm.vue'));
@@ -33,7 +33,7 @@ export default class PingPlugin implements PluginInstance {
             route: ROUTE_NAME,
             tooltip: 'Manual cell-ping & RTT entry',
             description: 'Manual cell ping and RTT entry',
-            icon: markRaw(IconRadar2) as unknown as MenuItemIconType,
+            icon: markRaw(IconDeviceMobilePin) as unknown as MenuItemIconType,
         } as MenuItemConfig);
     }
 
