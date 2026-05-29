@@ -333,6 +333,15 @@ async function submit() {
         for (const feat of fc.features) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const norm = await normalize_geojson(feat as any);
+            // normalize_geojson rebuilds properties and pushes everything it
+            // doesn't whitelist (including `icon`) under properties.metadata.
+            // `icon` must sit at the top level of properties to be emitted in
+            // the CoT and carried through DataSync, so promote it back.
+            const icon = feat.properties?.icon;
+            if (typeof icon === 'string') {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (norm as any).properties.icon = icon;
+            }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await mapStore.worker.db.add(norm as any, { authored: true });
         }
