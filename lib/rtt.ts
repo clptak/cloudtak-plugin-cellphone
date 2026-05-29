@@ -136,7 +136,7 @@ export function rttFeatures(prepared: RttPrepared): FeatureCollection {
             id: pointUid,
             name: pointName,
             description: pointDesc,
-            type: 'a-f-G',
+            type: 'a-n-G',
             how: 'h-g-i-g-o',
             icon: '83198b4872a8c34eb9c549da8a4de5a28f07821185b39a2277948f66c24ac17a:WildFire/Repeater',
             callsign: pointName,

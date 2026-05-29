@@ -333,14 +333,20 @@ async function submit() {
         for (const feat of fc.features) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const norm = await normalize_geojson(feat as any);
-            // normalize_geojson rebuilds properties and pushes everything it
-            // doesn't whitelist (including `icon`) under properties.metadata.
-            // `icon` must sit at the top level of properties to be emitted in
-            // the CoT and carried through DataSync, so promote it back.
-            const icon = feat.properties?.icon;
-            if (typeof icon === 'string') {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (norm as any).properties.icon = icon;
+            // normalize_geojson rewrites `type` from the geometry (Point ->
+            // u-d-p) and pushes non-whitelisted keys (icon, how) into
+            // properties.metadata. node-cot's from_geojson reads `type`, `how`
+            // and `icon` from the TOP LEVEL to emit the CoT event type and the
+            // <usericon> detail, so restore them for point features (the RTT
+            // tower). The circle/arc keep normalize_geojson's output unchanged.
+            if (feat.geometry?.type === 'Point') {
+                const op = (feat.properties ?? {}) as Record<string, unknown>;
+                for (const key of ['type', 'how', 'icon'] as const) {
+                    if (typeof op[key] === 'string') {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        (norm as any).properties[key] = op[key];
+                    }
+                }
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await mapStore.worker.db.add(norm as any, { authored: true });
