@@ -7,6 +7,9 @@
 !.cursor/skills/github-release-manager/
 !.cursor/skills/github-release-manager/SKILL.md
 
+# Local working files
+email_samples.md
+
 # Node (in case anyone adds a package.json for tooling)
 node_modules/
 
