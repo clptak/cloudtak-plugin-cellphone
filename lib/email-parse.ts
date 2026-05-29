@@ -45,6 +45,16 @@ function carrierPrefix(carrier: Carrier): string {
     return found ? found.prefix : carrier.toUpperCase();
 }
 
+// Brand color for a carrier, matched by the presence of its prefix in the
+// given text (case-insensitive). Anything unrecognized falls back to red.
+export function carrierColor(text: string): string {
+    const t = (text || '').toUpperCase();
+    if (t.includes('TMOBILE')) return '#E20074';
+    if (t.includes('ATT')) return '#067AB4';
+    if (t.includes('VZW')) return '#FF0000';
+    return '#FF0000';
+}
+
 // Build a UTC ISO string from wall-clock components plus the source-zone
 // offset (east-positive minutes). UTC instant = wall-as-UTC − offset.
 function toUtcISO(

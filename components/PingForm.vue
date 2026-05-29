@@ -30,6 +30,7 @@
                 <input
                     v-model='form.name'
                     class='form-control'
+                    placeholder='e.g. VZW, ATT, TMOBILE'
                 >
             </div>
 
@@ -196,6 +197,7 @@ import { prepareRtt, rttFeatures } from '../lib/rtt.ts';
 import {
     parseCarrierEmail,
     formatMarketStamp,
+    carrierColor,
     CARRIERS,
     US_TIMEZONES,
     type Carrier,
@@ -285,6 +287,7 @@ async function submit() {
                 lon: parsed.lon,
                 distance: parsed.uncertaintyMeters,
                 meters: true,
+                color: carrierColor(parsed.callsignPrefix),
             });
             // Callsign is the carrier prefix plus the transaction time rendered
             // in the selected US market time zone. The feature time tracks the
@@ -303,7 +306,8 @@ async function submit() {
                     lat, lon,
                     distance: form.distance!,
                     meters: form.meters,
-                    pingdateTimeInput: form.dateTime
+                    pingdateTimeInput: form.dateTime,
+                    color: carrierColor(form.name)
                 });
                 fc = cellPingFeatures(prepared);
             } else {
@@ -313,7 +317,8 @@ async function submit() {
                     distance: form.distance!,
                     azimuth: form.azimuth!,
                     meters: form.meters,
-                    rttdateTimeInput: form.dateTime
+                    rttdateTimeInput: form.dateTime,
+                    color: carrierColor(form.name)
                 });
                 fc = rttFeatures(prepared);
             }
