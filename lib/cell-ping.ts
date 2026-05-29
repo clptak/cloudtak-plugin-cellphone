@@ -15,6 +15,7 @@ export type CellPingInput = {
     creatorUid?: string;
     eventID?: string;
     pingdateTimeInput?: string;
+    color?: string;
 };
 
 export type CellPingPrepared = {
@@ -30,6 +31,7 @@ export type CellPingPrepared = {
     time: string;
     takLogDateTime: string | null;
     callsign: string;
+    color: string;
 };
 
 function isoLocalToParts(input: string): { date: string; time: string; takLogDateTime: string | null } {
@@ -80,7 +82,8 @@ export function prepareCellPing(input: CellPingInput): CellPingPrepared {
         date: parts.date,
         time: parts.time,
         takLogDateTime: parts.takLogDateTime,
-        callsign: `${input.name} - ${parts.time} on ${parts.date}`
+        callsign: `${input.name} - ${parts.time} on ${parts.date}`,
+        color: input.color || '#FF0000'
     };
 }
 
@@ -113,10 +116,10 @@ export function cellPingFeatures(prepared: CellPingPrepared): FeatureCollection 
             stale,
             archived: true,
             remarks: 'Location and Uncertainty',
-            'stroke': '#FF0000',
+            'stroke': prepared.color,
             'stroke-width': 2,
             'stroke-opacity': 1,
-            'fill': '#FF0000',
+            'fill': prepared.color,
             'fill-opacity': 0.1,
             shape: {
                 ellipse: {

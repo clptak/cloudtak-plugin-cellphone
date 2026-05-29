@@ -13,6 +13,7 @@ export type RttInput = {
     meters?: boolean;
     creatorUid?: string;
     rttdateTimeInput?: string;
+    color?: string;
 };
 
 export type RttPrepared = {
@@ -25,6 +26,7 @@ export type RttPrepared = {
     date: string;
     time: string;
     dtg: string | null;
+    color: string;
 };
 
 function formatPhoenix(d: Date): { date: string; time: string } {
@@ -70,7 +72,7 @@ export function prepareRtt(input: RttInput): RttPrepared {
         time = parts.time;
     }
 
-    return { name: input.name, lat: Number(input.lat), lon: Number(input.lon), azimuth, distance, creatorUid, date, time, dtg };
+    return { name: input.name, lat: Number(input.lat), lon: Number(input.lon), azimuth, distance, creatorUid, date, time, dtg, color: input.color || '#FF0000' };
 }
 
 function calculateArc(lat: number, lon: number, startAz: number, endAz: number, distance: number, steps: number): number[][] {
@@ -119,7 +121,7 @@ export function rttFeatures(prepared: RttPrepared): FeatureCollection {
             range: prepared.distance,
             bearing: prepared.azimuth,
             center: [mid[0], mid[1], 9999999],
-            stroke: '#FF0000',
+            stroke: prepared.color,
             'stroke-width': 2,
             'stroke-opacity': 1,
             labels: false
@@ -134,8 +136,9 @@ export function rttFeatures(prepared: RttPrepared): FeatureCollection {
             id: pointUid,
             name: pointName,
             description: pointDesc,
-            type: 'a-f-G',
+            type: 'a-n-G',
             how: 'h-g-i-g-o',
+            icon: '83198b4872a8c34eb9c549da8a4de5a28f07821185b39a2277948f66c24ac17a:WildFire/Repeater',
             callsign: pointName,
             time: prepared.dtg || now.toISOString(),
             start: now.toISOString(),

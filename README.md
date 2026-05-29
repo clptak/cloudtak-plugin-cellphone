@@ -17,6 +17,12 @@ SAROPS deployment into a fully client-side CloudTAK plugin.
 - **RTT (Round Trip Time)** — given a tower location, azimuth and
   distance, produces a `u-rb-a` arc (±70° wedge) plus an `a-f-G` point
   for the tower.
+- **Email Parse** — paste a carrier "location result" email body
+  (Verizon, AT&T, or T-Mobile) and the plugin extracts latitude,
+  longitude, uncertainty radius, and the transaction time, then plots
+  the same `u-d-c-c` (Circle) feature as Cell Ping. The DataSync log
+  `dtg` uses the transaction instant in UTC; a selectable US **market
+  time zone** controls only how the callsign timestamp is displayed.
 - Coordinate parsing for **DD / DMS / DM / MPS** formats (global lat/lon).
 - Optional **DataSync mission log entry** linked to the posted CoT via
   `entryUid`.
@@ -103,6 +109,24 @@ docker compose up -d --force-recreate cloudtak-api
 If a DataSync mission is active, the features are posted there and the
 map auto-refreshes. If no mission is active, features write to the local
 session only.
+
+### Email Parse tab
+
+1. Open **Cell Ping / RTT** and select the **Email Parse** tab.
+2. Choose the **Carrier** (Verizon, AT&T, or T-Mobile).
+3. Choose the **Market Time Zone** (US zones) — this only affects the
+   callsign timestamp; the DataSync `dtg` is always UTC.
+4. Paste the full carrier location-result email body into the text box.
+5. Toggle **Add to Active DataSync** to also write a mission log entry
+   (only available when a mission is active).
+6. **Submit**. The plugin extracts the coordinates, uncertainty radius,
+   and transaction time, plots the uncertainty circle, and — if enabled
+   — posts a log entry with the transaction time as `dtg`.
+
+Carrier time zones are read from the email body itself: Verizon
+`Timestamp` and AT&T `located on ... GMT` are UTC; T-Mobile
+`Pacific Standard/Daylight Time` is US Pacific. These determine the true
+instant used for `dtg`.
 
 ## Known limitations
 
