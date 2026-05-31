@@ -7,7 +7,9 @@ mission as CoT features.
 Ports the `ping2tak` and `rtt2tak` HTTP endpoints from the node-red
 SAROPS deployment into a fully client-side CloudTAK plugin.
 
-<img width="200" height="250" alt="CloudTAK_plugin_RTTTA" src="https://github.com/user-attachments/assets/35ae1d30-863e-483c-874d-5a3416ca3072" /><img width="200" height="279" alt="CloudTAK_plugin_email-parse" src="https://github.com/user-attachments/assets/528a265d-1c5b-4254-94ee-5d530855e426" />
+<img width="200" height="250" alt="CloudTAK_plugin_RTTTA" src="https://github.com/user-attachments/assets/35ae1d30-863e-483c-874d-5a3416ca3072" />
+
+<img width="200" height="279" alt="CloudTAK_plugin_email-parse" src="https://github.com/user-attachments/assets/528a265d-1c5b-4254-94ee-5d530855e426" />
 
 
 
