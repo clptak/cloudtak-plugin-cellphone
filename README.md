@@ -1,17 +1,8 @@
 # CloudTAK Cellphone Plugin
 
-A CloudTAK plugin that adds a "Cell Ping / RTT" menu item for manually
+A CloudTAK plugin that adds a "Cell Ping / RTT or Timing Advance" menu item for manually
 entering cellphone-derived location data and posting it to a DataSync
-mission as CoT features.
-
-Ports the `ping2tak` and `rtt2tak` HTTP endpoints from the node-red
-SAROPS deployment into a fully client-side CloudTAK plugin.
-
-<img width="200" height="250" alt="CloudTAK_plugin_RTTTA" src="https://github.com/user-attachments/assets/35ae1d30-863e-483c-874d-5a3416ca3072" />
-
-<img width="200" height="279" alt="CloudTAK_plugin_email-parse" src="https://github.com/user-attachments/assets/528a265d-1c5b-4254-94ee-5d530855e426" />
-
-
+mission as CoT features with an option to save the transaction to the Active DataSync to generate a timeline of call activities.
 
 ## Features
 
@@ -20,13 +11,15 @@ SAROPS deployment into a fully client-side CloudTAK plugin.
   TAK clients render the uncertainty circle natively.
 - **RTT (Round Trip Time)** — given a tower location, azimuth and
   distance, produces a `u-rb-a` arc (±70° wedge) plus an `a-f-G` point
-  for the tower.
+  for the tower.<br>
+  <img width="200" height="250" alt="CloudTAK_plugin_RTTTA" src="https://github.com/user-attachments/assets/35ae1d30-863e-483c-874d-5a3416ca3072" />
 - **Email Parse** — paste a carrier "location result" email body
   (Verizon, AT&T, or T-Mobile) and the plugin extracts latitude,
   longitude, uncertainty radius, and the transaction time, then plots
   the same `u-d-c-c` (Circle) feature as Cell Ping. The DataSync log
   `dtg` uses the transaction instant in UTC; a selectable US **market
-  time zone** controls only how the callsign timestamp is displayed.
+  time zone** controls only how the callsign timestamp is displayed. <img width="200" height="279" alt="CloudTAK_plugin_email-parse" src="https://github.com/user-attachments/assets/528a265d-1c5b-4254-94ee-5d530855e426" />
+
 - Coordinate parsing for **DD / DMS / DM / MPS** formats (global lat/lon).
 - Optional **DataSync mission log entry** linked to the posted CoT via
   `entryUid`.
@@ -156,5 +149,4 @@ MIT. See [LICENSE](LICENSE).
 
 ## Acknowledgements
 
-Originally ported from a node-red SAROPS deployment. Designed for use
-with CloudTAK by [dfpc-coe](https://github.com/dfpc-coe/CloudTAK).
+Designed for use with CloudTAK by [dfpc-coe](https://github.com/dfpc-coe/CloudTAK).
