@@ -327,43 +327,60 @@ async function submit() {
             logKeyword = mode.value === 'rtt' ? 'rtt-ta' : 'ping';
         }
 
+        // Callsign + uid of the primary feature, captured BEFORE the loop:
+        // normalize_geojson mutates the feature in place, so read the originals
+        // up front for the DataSync log entry.
+        const primaryCallsign = String(fc.features[0].properties?.callsign ?? form.name);
+        let primaryUid = String(fc.features[0].id);
+
         // Add each feature via the map worker — authored:true puts it on the
         // live map and, if a mission is active, links it to that mission and
         // broadcasts it to TAK Server. No custom server routes needed.
-        for (const feat of fc.features) {
+        for (let i = 0; i < fc.features.length; i++) {
+            const feat = fc.features[i];
+            // Snapshot the original properties before normalize_geojson moves
+            // them into properties.metadata.
+            const origProps = (feat.properties ?? {}) as Record<string, unknown>;
+            const featUid = String(feat.id ?? origProps.id ?? '');
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const norm = await normalize_geojson(feat as any);
-            // normalize_geojson rewrites `type` from the geometry (Point ->
-            // u-d-p) and pushes non-whitelisted keys (icon, how) into
-            // properties.metadata. node-cot's from_geojson reads `type`, `how`
-            // and `icon` from the TOP LEVEL to emit the CoT event type and the
-            // <usericon> detail, so restore them for point features (the RTT
-            // tower). The circle/arc keep normalize_geojson's output unchanged.
+            const norm = await normalize_geojson(feat as any) as any;
+            // node-cot (>=14) rebuilds properties as { metadata: <orig> }, which
+            // drops the top-level properties.id the CoT store uses as its uid.
+            // Without this the store mints a fresh uid, so the DataSync log
+            // entry (entryUid below) points at a uid that isn't in the mission
+            // and silently fails to attach. Restore it.
+            if (featUid) norm.properties.id = featUid;
+            // node-cot's from_geojson reads `type`, `how` and `icon` from the
+            // TOP LEVEL to emit the CoT event type and the <usericon> detail,
+            // but normalize_geojson relegated them to properties.metadata.
+            // Restore them from the snapshot for point features (the RTT tower).
             if (feat.geometry?.type === 'Point') {
-                const op = (feat.properties ?? {}) as Record<string, unknown>;
                 for (const key of ['type', 'how', 'icon'] as const) {
-                    if (typeof op[key] === 'string') {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        (norm as any).properties[key] = op[key];
+                    if (typeof origProps[key] === 'string') {
+                        norm.properties[key] = origProps[key];
                     }
                 }
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await mapStore.worker.db.add(norm as any, { authored: true });
+            const cot = await mapStore.worker.db.add(norm as any, { authored: true });
+            // Use the uid the store actually assigned to the primary feature as
+            // the authoritative entryUid for the log entry.
+            if (i === 0 && cot && typeof (cot as { id?: unknown }).id === 'string') {
+                primaryUid = (cot as { id: string }).id;
+            }
         }
 
         const guid = missionGuid.value;
 
         // Optional mission log entry — only when a mission is active.
         if (guid && form.addDataSyncLog) {
-            const callsign = String(fc.features[0].properties?.callsign ?? form.name);
             await std(`/api/marti/missions/${encodeURIComponent(guid)}/log`, {
                 method: 'POST',
                 body: {
-                    content: `${logLabel} ${callsign}`,
+                    content: `${logLabel} ${primaryCallsign}`,
                     dtg: logDtg,
                     keywords: ['investigation', 'cellphone', logKeyword],
-                    entryUid: String(fc.features[0].id)
+                    entryUid: primaryUid
                 }
             });
         }

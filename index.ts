@@ -26,15 +26,8 @@ export default class PingPlugin implements PluginInstance {
     }
 
     async enable(): Promise<void> {
-        console.log('Ping plugin enable() running');
-        this.api.menu.add({
-            key: MENU_KEY,
-            label: 'Cell Ping / RTT',
-            route: ROUTE_NAME,
-            tooltip: 'Manual cell-ping & RTT entry',
-            description: 'Manual cell ping and RTT entry',
-            icon: markRaw(IconDeviceMobilePin) as unknown as MenuItemIconType,
-        } as MenuItemConfig);
+        // Menu entry provided by cloudtak-plugin-locator (Cellphone Data tab).
+        // PingForm remains importable at plugins/ping/ for embedding.
     }
 
     async disable(): Promise<void> {
