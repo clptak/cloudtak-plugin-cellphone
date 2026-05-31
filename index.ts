@@ -1,11 +1,15 @@
-import { defineAsyncComponent } from 'vue';
+import { defineAsyncComponent, markRaw } from 'vue';
 import type { App } from 'vue';
+import { IconDeviceMobilePin } from '@tabler/icons-vue';
 import type { PluginAPI, PluginInstance } from '../../plugin.ts';
 
 const PingForm = defineAsyncComponent(() => import('./components/PingForm.vue'));
 
 const MENU_KEY = 'plugin-ping';
 const ROUTE_NAME = 'home-menu-ping';
+
+type MenuItemIconType = NonNullable<Parameters<PluginAPI['menu']['add']>[0]['icon']>;
+type MenuItemConfig = Parameters<PluginAPI['menu']['add']>[0];
 
 export default class PingPlugin implements PluginInstance {
     api: PluginAPI;
@@ -25,8 +29,14 @@ export default class PingPlugin implements PluginInstance {
     }
 
     async enable(): Promise<void> {
-        // Menu entry provided by cloudtak-plugin-locator (Cellphone Data tab).
-        // PingForm remains importable at plugins/ping/ for embedding.
+        this.api.menu.add({
+            key: MENU_KEY,
+            label: 'Cell Ping / RTT',
+            route: ROUTE_NAME,
+            tooltip: 'Manual cell-ping & RTT entry',
+            description: 'Manual cell ping and RTT entry',
+            icon: markRaw(IconDeviceMobilePin) as unknown as MenuItemIconType,
+        } as MenuItemConfig);
     }
 
     async disable(): Promise<void> {
