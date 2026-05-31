@@ -8,9 +8,10 @@ mission as CoT features with an option to save the transaction to the Active Dat
 
 - **Cell Ping** — given a tower location, range, and azimuth, produces a
   `u-d-c-c` (Circle) feature with the required `shape.ellipse` detail so
-  TAK clients render the uncertainty circle natively.
+  TAK clients render the uncertainty circle natively.<br>
+  <img width="192" height="250" alt="CloudTAK_plugin_ping" src="https://github.com/user-attachments/assets/418c9fc2-4e9c-478f-96d9-27e747152012" />
 - **RTT (Round Trip Time)** — given a tower location, azimuth and
-  distance, produces a `u-rb-a` arc (±70° wedge) plus an `a-f-G` point
+  distance, produces a `u-rb-a` arc (±70°) plus an `a-f-G` point
   for the tower.<br>
   <img width="200" height="250" alt="CloudTAK_plugin_RTTTA" src="https://github.com/user-attachments/assets/35ae1d30-863e-483c-874d-5a3416ca3072" />
 - **Email Parse** — paste a carrier "location result" email body
@@ -35,7 +36,9 @@ mechanism used by CloudTAK's built-in drawing tools.
 - **With an active DataSync mission** — the worker automatically links
   each feature to the mission and broadcasts it to TAK Server over the
   user's existing connection. Optionally posts a DataSync log entry via
-  `POST /api/marti/missions/:guid/log`.
+  `POST /api/marti/missions/:guid/log`.<br>
+  <img width="982" height="500" alt="cloudtak_plugin_map-ds_view" src="https://github.com/user-attachments/assets/1522dde3-63b6-4d64-858c-19ad2b014a08" />
+
 - **Without an active mission** — features appear on the local map for
   the current session only.
 
