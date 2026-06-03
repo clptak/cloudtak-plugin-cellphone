@@ -1,0 +1,31 @@
+# AT&T cMLC4/cMLC5 format sample
+#
+# This is the newer AT&T location-result body where Latitude, Longitude, and
+# Radius are concatenated onto a single run-together line with no spaces, and
+# there is no "located on ... GMT" timestamp field.
+#
+# Parser behaviour for this format:
+#   - Latitude / Longitude: matched by \s* (zero or more spaces) so both
+#     "Latitude 61.3" and "Latitude61.3" are accepted.
+#   - Radius: matched without the "Location accuracy likely better than" phrase.
+#   - Timestamp: absent — parser falls back to the current UTC instant.
+#
+# To test, copy everything between the dashed lines into the Email Parse tab
+# (select AT&T as the carrier) and click Submit.
+# -----------------------------------------------------------------------
+ITN
+4554191
+Case ID
+XXXXXXXXXXA111
+Mobile Number
+XXXXXX4046
+Confidence Level
+90Latitude61.313812Longitude-149.556187Radius223 meter (Certainty Factor)Data SourcecMLC4
+
+
+
+All location results are in decimal format.
+The cMLC4 and cMLC5 values represent location information found on the 4G or 5G networks.
+The results provided are AT&T's best estimate of the location of the target number. Please exercise caution in using these records for investigative purposes as location data is sourced from various databases which may cause location results to be less than exact.
+Please note, if no results were returned, AT&T has no available location information responsive to your request. If you see the same historical result more than once in a row, that is an indicator there is no updated location since the prior attempt to locate the target number.
+# -----------------------------------------------------------------------

@@ -109,21 +109,27 @@ function parseVerizon(text: string): ParsedPing {
 }
 
 function parseAtt(text: string): ParsedPing {
-    const lat = text.match(/Latitude\s+(-?\d+(?:\.\d+)?)/i);
-    const lon = text.match(/Longitude\s+(-?\d+(?:\.\d+)?)/i);
-    const radius = text.match(/Radius\s+Location accuracy likely better than\s+(\d+(?:\.\d+)?)/i);
+    // \s* (not \s+) so both "Latitude 61.3" and "Latitude61.3" are matched.
+    const lat = text.match(/Latitude\s*(-?\d+(?:\.\d+)?)/i);
+    const lon = text.match(/Longitude\s*(-?\d+(?:\.\d+)?)/i);
+    // "Location accuracy likely better than" is optional: newer cMLC4/cMLC5
+    // bodies use "Radius223 meter" with no intervening phrase.
+    const radius = text.match(/Radius\s*(?:Location accuracy likely better than\s+)?(\d+(?:\.\d+)?)/i);
+    // "located on ... GMT" is absent in the cMLC4/cMLC5 format; fall back to
+    // the current UTC instant so downstream callsign stamping still works.
     const ts = text.match(new RegExp('located on\\s+' + dateTime24Re.source + '\\s*GMT', 'i'));
 
     if (!lat) throw new Error('AT&T: could not find "Latitude <value>".');
     if (!lon) throw new Error('AT&T: could not find "Longitude <value>".');
-    if (!radius) throw new Error('AT&T: could not find "Radius Location accuracy likely better than <value>".');
-    if (!ts) throw new Error('AT&T: could not find "located on MM/DD/YYYY HH:MM:SS GMT".');
+    if (!radius) throw new Error('AT&T: could not find radius value.');
 
-    const transactionUtcISO = toUtcISO(
-        Number(ts[3]), Number(ts[1]), Number(ts[2]),
-        Number(ts[4]), Number(ts[5]), Number(ts[6]),
-        0
-    );
+    const transactionUtcISO = ts
+        ? toUtcISO(
+              Number(ts[3]), Number(ts[1]), Number(ts[2]),
+              Number(ts[4]), Number(ts[5]), Number(ts[6]),
+              0
+          )
+        : new Date().toISOString();
 
     return {
         carrier: 'att',
