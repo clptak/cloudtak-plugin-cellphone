@@ -11,8 +11,8 @@ mission as CoT features with an option to save the transaction to the Active Dat
   TAK clients render the uncertainty circle natively.<br>
   <img width="192" height="250" alt="CloudTAK_plugin_ping" src="https://github.com/user-attachments/assets/418c9fc2-4e9c-478f-96d9-27e747152012" />
 - **RTT (Round Trip Time)** — given a tower location, azimuth and
-  distance, produces a `u-rb-a` arc (±70°) plus an `a-f-G` point
-  for the tower.<br>
+  distance, produces a `u-d-f` thin-arc polygon (±70°, with a mid-arc
+  bearing spike to the tower) plus an `a-n-G` point for the tower.<br>
   <img width="200" height="250" alt="CloudTAK_plugin_RTTTA" src="https://github.com/user-attachments/assets/35ae1d30-863e-483c-874d-5a3416ca3072" />
 - **Email Parse** — paste a carrier "location result" email body
   (Verizon, AT&T, or T-Mobile) and the plugin extracts latitude,
@@ -35,7 +35,9 @@ mechanism used by CloudTAK's built-in drawing tools.
 
 - **With an active DataSync mission** — the worker automatically links
   each feature to the mission and broadcasts it to TAK Server over the
-  user's existing connection. Optionally posts a DataSync log entry via
+  user's existing connection. Features are then filed under a UID layer
+  named **Cellphone Data** (created if it does not already exist).
+  Optionally posts a DataSync log entry via
   `POST /api/marti/missions/:guid/log`.<br>
   <img width="982" height="500" alt="cloudtak_plugin_map-ds_view" src="https://github.com/user-attachments/assets/1522dde3-63b6-4d64-858c-19ad2b014a08" />
 
@@ -99,16 +101,16 @@ docker compose up -d --force-recreate cloudtak-api
    - **Range** (Cell Ping) or **Distance** (RTT) — in meters by default;
      uncheck the meters box to use miles.
    - **Azimuth** (RTT only) — degrees from true north to the center of
-     the wedge.
+     the arc.
    - **Date / Time** — local time of the observation; converted to UTC
      for the DataSync log entry's `dtg`.
 4. Toggle **Add DataSync Log** if you want a mission log entry linked
    to the produced CoT (only available when a mission is active).
 5. **Submit**.
 
-If a DataSync mission is active, the features are posted there and the
-map auto-refreshes. If no mission is active, features write to the local
-session only.
+If a DataSync mission is active, the features are posted there, filed
+under the **Cellphone Data** UID layer, and the map auto-refreshes. If
+no mission is active, features write to the local session only.
 
 ### Email Parse tab
 

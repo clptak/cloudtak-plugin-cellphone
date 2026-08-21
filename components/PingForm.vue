@@ -202,6 +202,7 @@ import {
     US_TIMEZONES,
     type Carrier,
 } from '../lib/email-parse.ts';
+import { fileFeaturesInCellphoneDataFolder } from '../lib/mission-folder.ts';
 import type { FeatureCollection } from 'geojson';
 
 function nowDateTimeLocal(): string {
@@ -332,6 +333,7 @@ async function submit() {
         // up front for the DataSync log entry.
         const primaryCallsign = String(fc.features[0].properties?.callsign ?? form.name);
         let primaryUid = String(fc.features[0].id);
+        const cotUids: string[] = [];
 
         // Add each feature via the map worker — authored:true puts it on the
         // live map and, if a mission is active, links it to that mission and
@@ -363,14 +365,27 @@ async function submit() {
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const cot = await mapStore.worker.db.add(norm as any, { authored: true });
-            // Use the uid the store actually assigned to the primary feature as
-            // the authoritative entryUid for the log entry.
-            if (i === 0 && cot && typeof (cot as { id?: unknown }).id === 'string') {
-                primaryUid = (cot as { id: string }).id;
-            }
+            const addedId = cot && typeof (cot as { id?: unknown }).id === 'string'
+                ? (cot as { id: string }).id
+                : featUid;
+            if (addedId) cotUids.push(addedId);
+            if (i === 0 && addedId) primaryUid = addedId;
         }
 
+        const mission = mapStore.mission;
         const guid = missionGuid.value;
+
+        if (mission && cotUids.length) {
+            try {
+                await fileFeaturesInCellphoneDataFolder(mission, cotUids);
+            } catch (folderErr) {
+                const msg = folderErr instanceof Error ? folderErr.message : String(folderErr);
+                throw new Error(
+                    `Features posted to mission, but filing into "Cellphone Data" failed: ${msg}`,
+                    { cause: folderErr },
+                );
+            }
+        }
 
         // Optional mission log entry — only when a mission is active.
         if (guid && form.addDataSyncLog) {
@@ -386,7 +401,9 @@ async function submit() {
         }
 
         const suffix = guid
-            ? (form.addDataSyncLog ? ' to mission (with log entry)' : ' to mission')
+            ? (form.addDataSyncLog
+                ? ' to mission "Cellphone Data" (with log entry)'
+                : ' to mission "Cellphone Data"')
             : ' to local map';
         success.value = `Posted ${fc.features.length} feature(s)${suffix}.`;
     } catch (err) {

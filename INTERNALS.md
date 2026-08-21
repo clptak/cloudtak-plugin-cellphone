@@ -110,6 +110,12 @@ The `as any` casts are required because `normalize_geojson` types `path` as
 `string | undefined` but `InputFeature` requires `string`. The cast is safe —
 the runtime value is correct, only the declared type is imprecise.
 
+### File features into a UID mission layer
+
+After `db.add`, collect the returned CoT UIDs and attach them to a named UID
+layer on the active mission (`mission.layer.list` / `create` / `attachFeatures`).
+This plugin uses a layer named **Cellphone Data**, creating it if it is missing.
+
 ### Optional: post a DataSync log entry (CloudTAK 13.2+ / PR #1454)
 
 ```typescript
@@ -143,11 +149,11 @@ Your input features need at minimum:
 |---|---|
 | `id` | A UUID string — becomes the CoT UID |
 | `properties.callsign` | Display name shown on the map |
-| `properties.type` | CoT type string (e.g. `a-f-G`, `u-d-c-c`, `u-rb-a`) |
+| `properties.type` | CoT type string (e.g. `a-n-G`, `u-d-c-c`, `u-d-f`) |
 | `geometry` | Standard GeoJSON geometry |
 
-For specialized CoT detail (e.g. `shape.ellipse` for uncertainty circles, arc
-geometry for RTT wedges), set those in `properties` before normalizing —
+For specialized CoT detail (e.g. `shape.ellipse` for uncertainty circles,
+polygon rings for RTT arcs), set those in `properties` before normalizing —
 CloudTAK passes them through to the CoT XML.
 
 ---

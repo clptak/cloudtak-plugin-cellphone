@@ -1,5 +1,5 @@
 // Port of the rtt2cot node-red subflow.
-// Emits an arc (u-rb-a LineString) + tower point (a-f-G).
+// Emits a thin arc polygon (u-d-f) with a mid-arc bearing spike to the tower, plus a tower point (a-n-G).
 
 import type { Feature, FeatureCollection } from 'geojson';
 import { destination as gcDestination } from './geo.ts';
@@ -89,7 +89,8 @@ export function rttFeatures(prepared: RttPrepared): FeatureCollection {
     const steps = 20;
     const startAz = prepared.azimuth - 70;
     const endAz = prepared.azimuth + 70;
-    const arc = calculateArc(prepared.lat, prepared.lon, startAz, endAz, prepared.distance, steps);
+    const outer = calculateArc(prepared.lat, prepared.lon, startAz, endAz, prepared.distance, steps);
+    const inner = calculateArc(prepared.lat, prepared.lon, startAz, endAz, prepared.distance + 1, steps);
 
     const arcName = `ARC ${prepared.name} - ${prepared.time} on ${prepared.date}`;
     const arcDesc = `Distance:  ${prepared.distance}\nAzimuth:  ${prepared.azimuth}\n\nFor Cellphone transaction for tower and sector on ${prepared.date} at ${prepared.time}`;
@@ -101,7 +102,15 @@ export function rttFeatures(prepared: RttPrepared): FeatureCollection {
     const arcUid = crypto.randomUUID();
     const pointUid = crypto.randomUUID();
 
-    const mid = arc[Math.floor(arc.length / 2)];
+    const midIdx = Math.floor(outer.length / 2);
+    const mid = outer[midIdx];
+    const ring = [
+        ...outer.slice(0, midIdx + 1),
+        [prepared.lon, prepared.lat],
+        ...outer.slice(midIdx),
+        ...inner.slice().reverse(),
+    ];
+    ring.push(ring[0]);
 
     const arcFeature: Feature = {
         type: 'Feature',
@@ -110,23 +119,22 @@ export function rttFeatures(prepared: RttPrepared): FeatureCollection {
             id: arcUid,
             name: arcName,
             description: arcDesc,
-            type: 'u-rb-a',
-            icon: 'u-rb-a',
+            type: 'u-d-f',
             how: 'h-e',
             callsign: arcName,
             time: prepared.dtg || now.toISOString(),
             start: now.toISOString(),
             stale: tenMinutesLater.toISOString(),
             archived: true,
-            range: prepared.distance,
-            bearing: prepared.azimuth,
             center: [mid[0], mid[1], 9999999],
             stroke: prepared.color,
             'stroke-width': 2,
             'stroke-opacity': 1,
+            fill: prepared.color,
+            'fill-opacity': 0.1,
             labels: false
         },
-        geometry: { type: 'LineString', coordinates: arc }
+        geometry: { type: 'Polygon', coordinates: [ring] }
     };
 
     const pointFeature: Feature = {
