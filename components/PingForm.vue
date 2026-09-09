@@ -1,193 +1,162 @@
 <template>
     <div class='p-3'>
-        <div class='mb-2 d-flex'>
+        <div class='d-flex flex-wrap gap-1 mb-3 mt-2'>
             <button
-                class='btn btn-sm'
-                :class='{ "btn-primary": mode === "ping", "btn-outline-secondary": mode !== "ping" }'
-                @click='mode = "ping"'
+                v-for='tab in modeOptions'
+                :key='tab.value'
+                type='button'
+                class='btn btn-sm btn-outline-warning'
+                :class='{ active: mode === tab.value }'
+                @click='mode = tab.value'
             >
-                Cellphone Ping
-            </button>
-            <button
-                class='btn btn-sm ms-2'
-                :class='{ "btn-primary": mode === "rtt", "btn-outline-secondary": mode !== "rtt" }'
-                @click='mode = "rtt"'
-            >
-                RTT Timing Advance
-            </button>
-            <button
-                class='btn btn-sm ms-2'
-                :class='{ "btn-primary": mode === "email", "btn-outline-secondary": mode !== "email" }'
-                @click='mode = "email"'
-            >
-                Email Parse
+                {{ tab.label }}
             </button>
         </div>
 
-        <template v-if='mode !== "email"'>
-            <div class='mb-2'>
-                <label class='form-label'>CARRIER</label>
-                <input
-                    v-model='form.name'
-                    class='form-control'
-                    placeholder='e.g. VZW, ATT, TMOBILE'
-                >
-            </div>
+        <div class='row g-2'>
+            <template v-if='mode !== "email"'>
+                <div class='col-12'>
+                    <TablerInput
+                        v-model='form.name'
+                        label='Carrier'
+                        placeholder='e.g. VZW, ATT, TMOBILE'
+                    />
+                </div>
 
-            <div class='mb-2'>
-                <label class='form-label'>Coordinates (DD / DMS / DM / MPS)</label>
-                <input
-                    v-model='form.coordinates'
-                    class='form-control'
-                    placeholder='34.12345 -118.56789'
-                >
-            </div>
+                <div class='col-12'>
+                    <TablerInput
+                        v-model='form.coordinates'
+                        label='Coordinates (DD / DMS / DM / MPS)'
+                        placeholder='34.12345 -118.56789'
+                    />
+                </div>
 
-            <div class='mb-2 row'>
-                <div class='col'>
-                    <label class='form-label'>{{ mode === 'rtt' ? 'Distance' : 'Range' }}</label>
-                    <input
-                        v-model.number='form.distance'
+                <div :class='mode === "rtt" ? "col-6" : "col-12"'>
+                    <TablerInput
+                        v-model='form.distance'
                         type='number'
-                        step='any'
-                        class='form-control'
-                    >
+                        :label='mode === "rtt" ? "Distance" : "Range"'
+                    />
                 </div>
                 <div
                     v-if='mode === "rtt"'
-                    class='col'
+                    class='col-6'
                 >
-                    <label class='form-label'>Azimuth (deg)</label>
-                    <input
-                        v-model.number='form.azimuth'
+                    <TablerInput
+                        v-model='form.azimuth'
                         type='number'
-                        step='any'
-                        class='form-control'
-                    >
+                        label='Azimuth (deg)'
+                    />
                 </div>
-            </div>
 
-            <div class='mb-2 form-check'>
-                <input
-                    v-model='form.meters'
-                    type='checkbox'
-                    class='form-check-input'
-                >
-                <label class='form-check-label'>Distance is in meters (else miles)</label>
-            </div>
-
-            <div class='mb-2'>
-                <label class='form-label'>Date / Time (local)</label>
-                <input
-                    v-model='form.dateTime'
-                    type='datetime-local'
-                    class='form-control'
-                >
-            </div>
-        </template>
-
-        <template v-if='mode === "email"'>
-            <div class='mb-2'>
-                <label class='form-label'>Carrier</label>
-                <select
-                    v-model='form.carrier'
-                    class='form-select'
-                >
-                    <option
-                        v-for='c in CARRIERS'
-                        :key='c.id'
-                        :value='c.id'
-                    >
-                        {{ c.label }}
-                    </option>
-                </select>
-            </div>
-
-            <div class='mb-2'>
-                <label class='form-label'>Market Time Zone</label>
-                <select
-                    v-model='form.marketTimeZone'
-                    class='form-select'
-                >
-                    <option
-                        v-for='tz in US_TIMEZONES'
-                        :key='tz.id'
-                        :value='tz.id'
-                    >
-                        {{ tz.label }}
-                    </option>
-                </select>
-                <div class='small text-muted'>
-                    Used only for the callsign timestamp. The DataSync <code>dtg</code> is always UTC.
+                <div class='col-12'>
+                    <TablerToggle
+                        v-model='form.meters'
+                        label='Distance is in meters (else miles)'
+                    />
                 </div>
-            </div>
 
-            <div class='mb-2'>
-                <label class='form-label'>Pasted Email Text</label>
-                <textarea
-                    v-model='form.emailText'
-                    class='form-control'
-                    rows='8'
-                    placeholder='Paste the full carrier location-result email body here…'
+                <div class='col-12'>
+                    <TablerInput
+                        v-model='form.dateTime'
+                        type='datetime-local'
+                        label='Date / Time (local)'
+                    />
+                </div>
+            </template>
+
+            <template v-if='mode === "email"'>
+                <div class='col-12'>
+                    <TablerEnum
+                        v-model='carrierLabel'
+                        label='Carrier'
+                        :options='carrierOptions'
+                    />
+                </div>
+
+                <div class='col-12'>
+                    <TablerEnum
+                        v-model='timezoneLabel'
+                        label='Market Time Zone'
+                        description='Used only for the callsign timestamp. The DataSync dtg is always UTC.'
+                        :options='timezoneOptions'
+                    />
+                </div>
+
+                <div class='col-12'>
+                    <TablerInput
+                        v-model='form.emailText'
+                        label='Pasted Email Text'
+                        :rows='8'
+                        placeholder='Paste the full carrier location-result email body here…'
+                    />
+                </div>
+            </template>
+
+            <div class='col-12'>
+                <TablerToggle
+                    v-model='form.addDataSyncLog'
+                    :label='mode === "email" ? "Add to Active DataSync" : "Add DataSync Log"'
+                    :description='missionGuid ? undefined : "(needs an active mission)"'
+                    :disabled='!missionGuid'
                 />
             </div>
-        </template>
 
-        <div class='mb-2 form-check form-switch'>
-            <input
-                v-model='form.addDataSyncLog'
-                type='checkbox'
-                class='form-check-input'
-                role='switch'
-                :disabled='!missionGuid'
+            <div
+                v-if='missionGuid'
+                class='col-12 small text-muted'
             >
-            <label class='form-check-label'>
-                {{ mode === 'email' ? 'Add to Active DataSync' : 'Add DataSync Log' }}
-                <span
-                    v-if='!missionGuid'
-                    class='text-muted'
-                >(needs an active mission)</span>
-            </label>
-        </div>
+                Will post to active mission: <code>{{ missionGuid }}</code>
+            </div>
+            <div
+                v-else
+                class='col-12 small text-muted'
+            >
+                No active mission — features will be written to the local map.
+            </div>
 
-        <div
-            v-if='missionGuid'
-            class='mb-2 small text-muted'
-        >
-            Will post to active mission: <code>{{ missionGuid }}</code>
-        </div>
-        <div
-            v-else
-            class='mb-2 small text-muted'
-        >
-            No active mission — features will be written to the local map.
-        </div>
+            <div
+                v-if='error'
+                class='col-12'
+            >
+                <TablerInlineAlert
+                    severity='danger'
+                    title='Submit failed'
+                    :description='error'
+                />
+            </div>
+            <div
+                v-if='success'
+                class='col-12'
+            >
+                <TablerInlineAlert
+                    severity='success'
+                    title='Posted'
+                    :description='success'
+                />
+            </div>
 
-        <div
-            v-if='error'
-            class='alert alert-danger'
-        >
-            {{ error }}
+            <div class='col-12'>
+                <button
+                    class='btn btn-primary w-100 mt-2'
+                    :disabled='submitting'
+                    @click='submit'
+                >
+                    {{ submitting ? 'Submitting…' : 'Submit' }}
+                </button>
+            </div>
         </div>
-        <div
-            v-if='success'
-            class='alert alert-success'
-        >
-            {{ success }}
-        </div>
-
-        <button
-            class='btn btn-primary w-100'
-            :disabled='submitting'
-            @click='submit'
-        >
-            {{ submitting ? 'Submitting…' : 'Submit' }}
-        </button>
     </div>
 </template>
 
 <script setup lang='ts'>
 import { ref, reactive, computed } from 'vue';
+import {
+    TablerInput,
+    TablerEnum,
+    TablerToggle,
+    TablerInlineAlert,
+} from '@tak-ps/vue-tabler';
 import { useMapStore } from '../../../src/stores/map.ts';
 import { std } from '../../../src/std.ts';
 import { normalize_geojson } from '@tak-ps/node-cot/normalize_geojson';
@@ -219,15 +188,22 @@ function localDateTimeToUtcISO(local: string): string {
 }
 
 const mapStore = useMapStore();
-const mode = ref<'ping' | 'rtt' | 'email'>('ping');
+type PingMode = 'ping' | 'rtt' | 'email';
+
+const mode = ref<PingMode>('ping');
+const modeOptions: { value: PingMode; label: string }[] = [
+    { value: 'ping', label: 'Cellphone Ping' },
+    { value: 'rtt', label: 'RTT Timing Advance' },
+    { value: 'email', label: 'Email Parse' },
+];
 const error = ref<string>('');
 const success = ref<string>('');
 const submitting = ref<boolean>(false);
 const form = reactive<{
     name: string;
     coordinates: string;
-    distance: number | null;
-    azimuth: number | null;
+    distance: number | undefined;
+    azimuth: number | undefined;
     meters: boolean;
     dateTime: string;
     addDataSyncLog: boolean;
@@ -237,14 +213,33 @@ const form = reactive<{
 }>({
     name: '',
     coordinates: '',
-    distance: null,
-    azimuth: null,
+    distance: undefined,
+    azimuth: undefined,
     meters: false,
     dateTime: nowDateTimeLocal(),
     addDataSyncLog: false,
     carrier: 'verizon',
     marketTimeZone: 'America/Phoenix',
     emailText: '',
+});
+
+const carrierOptions = CARRIERS.map((c) => c.label);
+const timezoneOptions = US_TIMEZONES.map((tz) => tz.label);
+
+const carrierLabel = computed({
+    get: () => CARRIERS.find((c) => c.id === form.carrier)?.label ?? CARRIERS[0].label,
+    set: (label: string) => {
+        const found = CARRIERS.find((c) => c.label === label);
+        if (found) form.carrier = found.id;
+    },
+});
+
+const timezoneLabel = computed({
+    get: () => US_TIMEZONES.find((tz) => tz.id === form.marketTimeZone)?.label ?? US_TIMEZONES[0].label,
+    set: (label: string) => {
+        const found = US_TIMEZONES.find((tz) => tz.label === label);
+        if (found) form.marketTimeZone = found.id;
+    },
 });
 
 const missionGuid = computed<string | undefined>(() => mapStore.mission?.meta.guid);
@@ -258,11 +253,11 @@ async function submit() {
     } else {
         if (!form.name) { error.value = 'Name / Callsign is required.'; return; }
         if (!form.coordinates) { error.value = 'Coordinates is required.'; return; }
-        if (form.distance === null || Number.isNaN(form.distance)) {
+        if (form.distance === undefined || Number.isNaN(form.distance)) {
             error.value = mode.value === 'rtt' ? 'Distance is required.' : 'Range is required.';
             return;
         }
-        if (mode.value === 'rtt' && (form.azimuth === null || Number.isNaN(form.azimuth))) {
+        if (mode.value === 'rtt' && (form.azimuth === undefined || Number.isNaN(form.azimuth))) {
             error.value = 'Azimuth is required for RTT.';
             return;
         }

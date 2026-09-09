@@ -10,6 +10,7 @@
   "peerDependencies": {
     "@tak-ps/cloudtak": "*",
     "@tak-ps/node-cot": "*",
+    "@tak-ps/vue-tabler": "*",
     "vue": "^3.5.0"
   },
   "devDependencies": {
