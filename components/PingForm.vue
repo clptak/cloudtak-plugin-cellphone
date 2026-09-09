@@ -51,8 +51,8 @@
 
                 <div class='col-12'>
                     <TablerToggle
-                        v-model='form.meters'
-                        label='Distance is in meters (else miles)'
+                        v-model='distanceInPrimaryUnit'
+                        :label='distanceUnitLabel'
                     />
                 </div>
 
@@ -239,6 +239,20 @@ const timezoneLabel = computed({
     set: (label: string) => {
         const found = US_TIMEZONES.find((tz) => tz.label === label);
         if (found) form.marketTimeZone = found.id;
+    },
+});
+
+const distanceUnitLabel = computed(() =>
+    mode.value === 'rtt'
+        ? 'Distance is in miles (else meters)'
+        : 'Distance is in meters (else miles)',
+);
+
+// RTT copy treats miles as the on-state; form.meters stays true when the input is meters.
+const distanceInPrimaryUnit = computed({
+    get: () => (mode.value === 'rtt' ? !form.meters : form.meters),
+    set: (on: boolean) => {
+        form.meters = mode.value === 'rtt' ? !on : on;
     },
 });
 
